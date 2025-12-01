@@ -3,64 +3,63 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Test the Model</title>
-  <link rel="stylesheet" href="css/style.css">
+  <title>Head-Direction Model Test</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; background: #f9fafc; }
+    h1 { margin-bottom: 0.5rem; }
+    #webcam-container { margin: 20px 0; }
+    #label-container div { margin: 4px 0; font-size: 1.2rem; }
+    button { padding: 10px 16px; font-size: 1rem; }
+  </style>
 </head>
 <body>
-  <header class="site-header">
-    <div class="wrapper">
-      <h1>Teachable Machine Project</h1>
-      <nav aria-label="Main navigation">
-        <ul class="nav">
-          <li><a href="index.html">Home</a></li>
-          <li><a aria-current="page" href="test.html">Test the Model</a></li>
-        </ul>
-      </nav>
-    </div>
-  </header>
+  <h1>Head-Direction Classifier (Teachable Machine)</h1>
+  <p>Click “Start” and allow camera access. Then turn your head to test directions.</p>
+  <button type="button" onclick="init()">Start</button>
+  <div id="webcam-container"></div>
+  <div id="label-container"></div>
 
-  <main class="wrapper">
-    <section class="section">
-      <h2>Test the Model</h2>
-      <p>
-        Make sure you are in a well-lit area and allow the browser to use your
-        camera (or microphone, if you built a sound model). Then try each of
-        the classes and watch how the label changes.
-      </p>
-    </section>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
+  <script type="text/javascript">
+    const URL = "https://teachablemachine.withgoogle.com/models/ETsgiU74v/";
 
-    <section class="section">
-      <h3>Live demo</h3>
-      <p>
-        If the embed below doesn’t load, you can also open the demo in a new tab.
-      </p>
-      <p>
-        <a class="btn" href="https://editor.p5js.org/YOUR_NAME/full/YOUR_ID" target="_blank">
-          Open full-screen demo
-        </a>
-      </p>
+    let model, webcam, labelContainer, maxPredictions;
 
-      <div class="tm-frame">
-        <iframe
-          src="https://editor.p5js.org/YOUR_NAME/full/YOUR_ID"
-          title="Teachable Machine demo"
-          allow="camera; microphone;"
-        ></iframe>
-      </div>
-    </section>
+    async function init() {
+      const modelURL = URL + "model.json";
+      const metadataURL = URL + "metadata.json";
 
-    <section class="section">
-      <h3>What to look for</h3>
-      <ul>
-        <li>Does the model respond quickly when you switch classes?</li>
-        <li>Are there situations where it gets confused?</li>
-        <li>Does lighting, position, or background change the results?</li>
-      </ul>
-    </section>
-  </main>
+      model = await tmImage.load(modelURL, metadataURL);
+      maxPredictions = model.getTotalClasses();
 
-  <footer class="site-footer">
-    <p>© 2025 [your names]</p>
-  </footer>
+      const flip = true;
+      webcam = new tmImage.Webcam(480, 360, flip); // width, height, flip
+      await webcam.setup();
+      await webcam.play();
+      window.requestAnimationFrame(loop);
+
+      document.getElementById("webcam-container").appendChild(webcam.canvas);
+      labelContainer = document.getElementById("label-container");
+      for (let i = 0; i < maxPredictions; i++) {
+        labelContainer.appendChild(document.createElement("div"));
+      }
+    }
+
+    async function loop() {
+      webcam.update();
+      await predict();
+      window.requestAnimationFrame(loop);
+    }
+
+    async function predict() {
+      const prediction = await model.predict(webcam.canvas);
+      for (let i = 0; i < maxPredictions; i++) {
+        const classPrediction =
+          prediction[i].className + ": " + (prediction[i].probability * 100).toFixed(1) + "%";
+        labelContainer.childNodes[i].innerHTML = classPrediction;
+      }
+    }
+  </script>
 </body>
 </html>
