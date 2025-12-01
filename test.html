@@ -3,25 +3,45 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Head-Direction Model Test</title>
-  <style>
-    body { font-family: Arial, sans-serif; padding: 20px; background: #f9fafc; }
-    h1 { margin-bottom: 0.5rem; }
-    #webcam-container { margin: 20px 0; }
-    #label-container div { margin: 4px 0; font-size: 1.2rem; }
-    button { padding: 10px 16px; font-size: 1rem; }
-  </style>
+  <title>Test the Model</title>
+  <link rel="stylesheet" href="css/style.css">
 </head>
+
 <body>
-  <h1>Head-Direction Classifier (Teachable Machine)</h1>
-  <p>Click “Start” and allow camera access. Then turn your head to test directions.</p>
-  <button type="button" onclick="init()">Start</button>
-  <div id="webcam-container"></div>
-  <div id="label-container"></div>
+  <header class="site-header">
+    <div class="wrapper">
+      <h1>Teachable Machine Project</h1>
+      <nav aria-label="Main navigation">
+        <ul class="nav">
+          <li><a href="index.html">Home</a></li>
+          <li><a aria-current="page" href="test.html">Test the Model</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main class="wrapper">
+    <section class="hero">
+      <h2>Test the Head-Direction Model</h2>
+      <p>Click “Start” and allow camera access. Then turn your head: up, down, left, right, or straight ahead.</p>
+    </section>
+
+    <section class="section">
+      <button class="btn" type="button" onclick="init()">Start Webcam</button>
+
+      <div id="webcam-container" style="margin-top:20px;"></div>
+      <div id="label-container" style="margin-top:10px;"></div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <p>© 2025</p>
+  </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
-  <script type="text/javascript">
+
+  <script>
     const URL = "https://teachablemachine.withgoogle.com/models/ETsgiU74v/";
 
     let model, webcam, labelContainer, maxPredictions;
@@ -34,15 +54,21 @@
       maxPredictions = model.getTotalClasses();
 
       const flip = true;
-      webcam = new tmImage.Webcam(480, 360, flip); // width, height, flip
+      webcam = new tmImage.Webcam(480, 360, flip);
       await webcam.setup();
       await webcam.play();
       window.requestAnimationFrame(loop);
 
       document.getElementById("webcam-container").appendChild(webcam.canvas);
+
       labelContainer = document.getElementById("label-container");
+      labelContainer.innerHTML = ""; // clear existing labels
+
       for (let i = 0; i < maxPredictions; i++) {
-        labelContainer.appendChild(document.createElement("div"));
+        const div = document.createElement("div");
+        div.style.fontSize = "1.2rem";
+        div.style.margin = "4px 0";
+        labelContainer.appendChild(div);
       }
     }
 
@@ -55,9 +81,9 @@
     async function predict() {
       const prediction = await model.predict(webcam.canvas);
       for (let i = 0; i < maxPredictions; i++) {
-        const classPrediction =
-          prediction[i].className + ": " + (prediction[i].probability * 100).toFixed(1) + "%";
-        labelContainer.childNodes[i].innerHTML = classPrediction;
+        const className = prediction[i].className;
+        const prob = (prediction[i].probability * 100).toFixed(1) + "%";
+        labelContainer.childNodes[i].innerHTML = `${className}: ${prob}`;
       }
     }
   </script>
